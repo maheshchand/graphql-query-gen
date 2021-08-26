@@ -1,0 +1,28 @@
+{
+  "name": "graphql-query-gen",
+  "version": "1.0.1",
+  "description": "Node.js module to generate queries from graphQL endpoint",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maheshchand/graphql-query-gen.git"
+  },
+  "homepage": "https://github.com/maheshchand/graphql-query-gen",
+  "keywords": [
+    "graphql",
+    "gql",
+    "query",
+    "generator",
+    "query gen"
+  ],
+  "dependencies": {
+    "faker": "^5.5.3",
+    "graphql": "^15.5.1",
+    "node-fetch": "^2.6.1"
+  }
+}

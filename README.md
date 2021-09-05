@@ -1,7 +1,7 @@
 # graphql-query-gen
-Node.js module to generate queries from graphQL endpoint. 
+Node.js module to generate queries from graphQL endpoint or from schema text. 
 
-It reads graphql SDL using introspection query and then generates queries/mutations with random input data.
+It reads graphql SDL using introspection query and then generates queries/mutations with random input data. Additionally lists down inputs, types as well. Also, there you get schema string and some statistics data as well.
 
 ## Installation
 
@@ -14,10 +14,42 @@ It reads graphql SDL using introspection query and then generates queries/mutati
 const qGen = require('graphql-query-gen');
 
 const options = {};
-qGen.generateQueries("endpoint-url", options).then(result => console.log(result));
 
+// Work with endpoint
+qGen.processEndpoint("endpoint-url", options).then(result => console.log(result));
 
-// or you can do like to handle errors as well
+// work with schema
+const s = `
+type Character {
+  id: ID
+  name: String
+}
+type Jedi  {
+  id: ID
+  side: String
+}
+type Droid {
+  id: ID
+  model: Model
+}
+
+type Model {
+    key: String
+}
+
+input TestInput {
+    key1: String
+    key2: Int
+}
+union People = Character | Jedi | Droid
+type Query {
+  allPeople(input: TestInput, input2: String): [People]
+}
+`;
+
+const result  = graphqlQueryGen.processSchema(s, options);
+
+// or you can do like below to handle errors as well
 const qGen = require('graphql-query-gen');
 try {
     qGen.generateQueries(
@@ -44,6 +76,7 @@ try {
     depth: 7, // Number [Default is 5] -> For query/mutation result the nesting level of fields
     spacer: ' ', // String [Default is ''] -> To indent query/mutation the space character (e.g. to print on HTML page you can use &nbsp; )
     indentBy: 2 // Number [Default is 4] -> The number of spacer to use for indentation.
+    inputVariables: true // Boolean [Default is false] -> In generated query input would be in form or variable if true, else inline input.
 }
 
 ```
@@ -60,12 +93,29 @@ Sample output looks like following
     { name: 'Mutation', options: [] },
     { name: 'Subscription', options: [] }
   ],
-  statistics: {}
+  types: [
+    { name: 'Character', definition: '{\n  id: ID\n  name: String\n}' },
+    { name: 'Jedi', definition: '{\n  id: ID\n  side: String\n}' },
+    { name: 'Droid', definition: '{\n  id: ID\n  model: Model\n}' },
+    { name: 'Model', definition: '{\n  key: String\n}' }
+  ],
+  inputs: [
+    {
+      name: 'TestInput',
+      definition: '{\n  key1: String\n  key2: Int\n}'
+    }
+  ],
+  statistics: {
+    counts: { queries: 1, mutations: 0, subscriptions: 0, types: 4, inputs: 1 },
+    suggestions: { duplicates: [Array] }
+  },
+  schema: 'SCHEMA_AS_STRING'
 }
 
 ```
 
 ## TODO
 
-Subscriptions are not parsed and resturned as of now, planned for next release
-statistics is aways empty and planned to return details in next release
+- Subscriptions are not processed and will resturn as empty as of now, planned for future release
+- Fragments support is limited for now, plan to enhance in future release
+- No logger for now, plan to add in future release

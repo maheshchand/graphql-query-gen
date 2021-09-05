@@ -7,6 +7,10 @@ It reads graphql SDL using introspection query and then generates queries/mutati
 
 > npm install graphql-query-gen
 
+## Live Demo
+
+>  [Graphql Query Generator](https://chrome.google.com/webstore/search/jmdpimbhelkmbpgdkjgapkegfapaapej) is a chrome extension built using this. You can install and try it to see what this node module can do for you.
+
 ## Usage
 
 ```javascript
@@ -75,7 +79,7 @@ try {
     filter: null, // String [Default is null ] -> You can give a query or mutation name or part of it
     depth: 7, // Number [Default is 5] -> For query/mutation result the nesting level of fields
     spacer: ' ', // String [Default is ''] -> To indent query/mutation the space character (e.g. to print on HTML page you can use &nbsp; )
-    indentBy: 2 // Number [Default is 4] -> The number of spacer to use for indentation.
+    indentBy: 2, // Number [Default is 4] -> The number of spacer to use for indentation.
     inputVariables: true // Boolean [Default is false] -> In generated query input would be in form or variable if true, else inline input.
 }
 

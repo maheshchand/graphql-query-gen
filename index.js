@@ -1,7 +1,14 @@
 const { getIntrospectionQuery, buildClientSchema , buildSchema, introspectionFromSchema, printSchema} = require('graphql');
 const fetch = require('node-fetch');
-const faker = require('faker');
+const { v4: uuidv4 } = require('uuid');
 var stringSimilarity = require("string-similarity");
+
+class HTTPResponseError extends Error {
+	constructor(response, ...args) {
+        super(`HTTP Error Response: ${response.status} ${response.statusText}`, ...args);
+        this.response = response;
+	}
+}
 
 exports.processEndpoint = async function(url, options) {
     //Prepare to fetch sdl
@@ -12,6 +19,11 @@ exports.processEndpoint = async function(url, options) {
     
     //Fetch SDL
     const response = await fetch(url, requestOptions)
+
+    if (!response || !response.ok) {
+        throw new HTTPResponseError(response);
+    }
+    
     const json = await response.json();
     const schema = printSchema(buildClientSchema(json.data, {assumeValid: true}))
     return exports.process(json.data, schema, options);
@@ -280,20 +292,25 @@ function generateResponseFields(types, responseType, indent, depth, spacer, inde
 function getRandomValue(type, inputVariables) {
     switch(type){
         case 'Int':
-            return faker.datatype.number();
+            return Math.floor((Math.random() * 1000) + 1);
         case 'Float':
-            return faker.datatype.float();
+            return parseFloat(((Math.random() * 1000) + 1).toFixed(2));;
         case 'String':
-            return inputVariables? faker.datatype.string() : '"' + faker.datatype.string() + '"';
+            return inputVariables? getRandomString() : '"' + getRandomString() + '"';
         case 'uuid':
-            return inputVariables? faker.datatype.uuid() : '"' + faker.datatype.uuid() + '"';
+            return inputVariables? uuidv4() : '"' + uuidv4() + '"';
         case 'Boolean':
-            return faker.datatype.boolean();
+            return [true, false][Math.floor(Math.random() * 2)];
         case 'Date':
-            return  inputVariables? faker.date.past() : '"' + faker.date.past() + '"';
+            return  inputVariables? new Date().toDateString() : '"' + new Date().toDateString() + '"';
         case 'ID':
-            return  inputVariables? faker.datatype.uuid() : '"' + faker.datatype.uuid() + '"';
+            return  inputVariables? uuidv4() : '"' + uuidv4() + '"';
         default:
             return inputVariables? "" : "\"\"";
     }
+}
+
+function getRandomString() {
+    return ['Suspendisse', 'quis', 'gravida', 'risus', 'eu', 'auctor', 'erat', 'Vivamus', 'libero', 'lorem',
+        'elementum', 'pulvinar', 'lacinia', 'nec', 'accumsan'][Math.floor(Math.random() * 10)];
 }

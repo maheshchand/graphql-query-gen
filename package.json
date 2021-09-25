@@ -1,12 +1,12 @@
 {
   "name": "graphql-query-gen",
-  "version": "1.2.0",
-  "description": "Node.js module to generate queries from graphQL endpoint",
+  "version": "1.2.5",
+  "description": "Node.js module to generate queries with random input data from graphQL endpoint or schema",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Mahesh Chand <mahesh.yadav.107@gmail.com>",
   "license": "ISC",
   "repository": {
     "type": "git",
@@ -18,12 +18,19 @@
     "gql",
     "query",
     "generator",
-    "query gen"
+    "query gen",
+    "random query",
+    "query gen",
+    "query generator",
+    "graphql query generator",
+    "mutation",
+    "graphql endpoint",
+    "graphql schema"
   ],
   "dependencies": {
-    "faker": "^5.5.3",
     "graphql": "^15.5.1",
     "node-fetch": "^2.6.1",
-    "string-similarity": "^4.0.4"
+    "string-similarity": "^4.0.4",
+    "uuid": "^8.3.2"
   }
 }

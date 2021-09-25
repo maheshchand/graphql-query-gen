@@ -3,8 +3,10 @@ const graphqlQueryGen = require('./index');
 const options = {
     depth: 5,
     indentBy: 2,
+    spacer: ' ',
     filter: null,
-    inputVariables: false
+    inputVariables: true,
+    duplicatePercentage: 75
 };
 
 // Process using endpoint
@@ -12,11 +14,13 @@ try {
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0
     
     graphqlQueryGen.processEndpoint(
-        "https://www.universe.com/graphql", options
+        "https://rickandmortyapi.com/graphql", options
         
     ).then(
-        result => console.log(JSON.stringify(result.sdl))
-    );
+        result => console.log(JSON.stringify(result))
+    ).catch(
+      error => console.log(error.message)
+    )
 } catch (err) {
     console.log(err.message);
 }
@@ -43,6 +47,8 @@ type Model {
 input TestInput {
     key1: String
     key2: Int
+    key3: Float
+    key4: Boolean
 }
 union People = Character | Jedi | Droid
 type Query {
@@ -50,5 +56,9 @@ type Query {
 }
 `;
 
-const result  = graphqlQueryGen.processSchema(s, options);
-console.log(result);
+try {
+  const result  = graphqlQueryGen.processSchema(s, options);
+  console.log(result);
+} catch (err) {
+  console.log('Error: ' + err.message);
+}

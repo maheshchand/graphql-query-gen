@@ -106,8 +106,7 @@ function listTypes(types, kind, spacer, indent) {
     resultTypes.forEach(t => {
         const fields = [];
         t.fields.forEach(f => {
-            const fieldType = getType(f.type);
-            fields.push(`${f.name}: ${fieldType.name}`);
+            fields.push(`${f.name}: ${generateTypeValue(f.type)}`);
         });
         results.push({ name: t.name, definition: `{\n${spacer.repeat(indent)}${fields.join('\n' + spacer.repeat(indent))}\n}`});
     });
@@ -120,8 +119,7 @@ function listInputs(types, kind, spacer, indent) {
     inputTypes.forEach(t => {
         const inputFields = [];
         t.inputFields.forEach(f => {
-            const fieldType = getType(f.type);
-            inputFields.push(`${f.name}: ${fieldType.name}`);
+            inputFields.push(`${f.name}: ${generateTypeValue(f.type)}`);
         });
         inputs.push({ name: t.name, definition: `{\n${spacer.repeat(indent)}${inputFields.join('\n' + spacer.repeat(indent))}\n}`});
     });
@@ -145,11 +143,15 @@ function generateOperation(types, typeName, opName, args, resType, depth, spacer
     const argsInput = generateArgsInput(types, args, indentBy *2, spacer, indentBy, inputVariables);
     const resFields = generateResponseFields(types, resType, indentBy* 2, depth, spacer, indentBy);
     
-    const query = `${typeName.toLowerCase()}${argsInput.typeVars} {
-${spacer.repeat(indentBy)}${opName} ${argsInput.input} {
+    var resDef = '';
+    if(resFields)
+        resDef = ` {
 ${spacer.repeat(indentBy * 2)}__typename
 ${resFields}
-${spacer.repeat(2)}}
+${spacer.repeat(2)}}`;
+
+    const query = `${typeName.toLowerCase()}${argsInput.typeVars} {
+${spacer.repeat(indentBy)}${opName} ${argsInput.input}${resDef}
 }`;
 
     return {
@@ -172,7 +174,7 @@ function generateArgsInput(types, args, indent, spacer, indentBy, inputVariables
         args.forEach(arg => {
             if (inputVariables) {
                 argsInput.variables[arg.name] = getArgValue(types, arg, indent, spacer, indentBy, inputVariables);
-                typeVars.push(`$${arg.name}: ${getType(arg.type).name}`);
+                typeVars.push(`$${arg.name}: ${generateTypeValue(arg.type)}`);
                 inputs.push(`${arg.name}: $${arg.name}`);
             } else {
                 inputs.push(generateArg(types, arg, indent, spacer, indentBy, inputVariables));
@@ -181,7 +183,7 @@ function generateArgsInput(types, args, indent, spacer, indentBy, inputVariables
 
         argsInput.typeVars = inputVariables ? ' (' + typeVars.join(', ') + ')' : '';
         argsInput.input = `(
-${inputs.join(',\n')}
+${spacer.repeat(indent)}${inputs.join(`,\n${spacer.repeat(indent)}`)}
 ${spacer.repeat(indent - indentBy)})`;
     } 
 
@@ -232,6 +234,19 @@ ${spacer.repeat(indent)}}`;
     }
 }
 
+function generateTypeValue(type) {
+    const fieldType = getType(type);
+    const fieldKind = getKind(type, []).reverse();
+    var type = fieldType.name;
+    fieldKind.forEach(k => {
+        if(k == 'LIST')
+            type = '[' + type + ']';
+        else if (k  == 'NON_NULL')
+            type = type + '!';
+    });
+    return type;
+}
+
 function getName(responseType) {
     if(!responseType.name)
         return getName(responseType.ofType)
@@ -242,6 +257,15 @@ function getType(fieldType) {
     if(!fieldType.name)
         return getType(fieldType.ofType)
     return fieldType;
+}
+
+function getKind(fieldType, kinds) {
+    if(fieldType.ofType != null){
+        kinds.push(fieldType.kind);
+        return getKind(fieldType.ofType, kinds);
+    } else {
+        return kinds;
+    }
 }
 
 function responseFieldsUnion(types, typeDef, indent, depth, spacer, indentBy) {
@@ -275,6 +299,9 @@ function generateResponseFields(types, responseType, indent, depth, spacer, inde
         return "";
     const responseTypeDef = types.filter(type => type.name == getName(responseType))[0];
     const fields = [];
+
+    if(responseTypeDef.kind == 'SCALAR')
+        return null;
 
     if(responseTypeDef.kind == 'UNION')
         return responseFieldsUnion(types, responseTypeDef, indent, depth, spacer, indentBy);

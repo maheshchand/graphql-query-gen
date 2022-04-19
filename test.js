@@ -29,11 +29,11 @@ try {
 const s = `
 type Character {
   id: ID
-  name: String
+  name: [String]!
 }
 type Jedi  {
   id: ID
-  side: String
+  side: String!
 }
 type Droid {
   id: ID
@@ -46,14 +46,17 @@ type Model {
 
 input TestInput {
     key1: String
-    key2: Int
-    key3: Float
+    key2: [Int!]!
+    key3: Float!
     key4: Boolean
 }
 union People = Character | Jedi | Droid
 type Query {
-  allPeople(input: TestInput, input2: String): [People]
+  allPeople(input: TestInput!, input2: [String]): [People]
+  testScalar(a: String): JSON
 }
+
+scalar JSON
 `;
 
 try {

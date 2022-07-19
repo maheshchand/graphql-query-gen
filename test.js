@@ -1,23 +1,25 @@
 const graphqlQueryGen = require('./index');
 
 const options = {
-    depth: 5,
-    indentBy: 2,
-    spacer: ' ',
-    filter: null,
-    inputVariables: true,
-    duplicatePercentage: 75
+  debug: false,
+  responseDepth: 5,
+  inputDepth: 7,
+  indentBy: 2,
+  spacer: ' ',
+  filter: null,
+  inputVariables: false,
+  duplicatePercentage: 75
 };
 
 // Process using endpoint
 try {
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0
-    
+
     graphqlQueryGen.processEndpoint(
         "https://rickandmortyapi.com/graphql", options
-        
+
     ).then(
-        result => console.log(JSON.stringify(result))
+        result => console.log(result)
     ).catch(
       error => console.log(error.message)
     )
@@ -58,10 +60,20 @@ type Query {
 
 scalar JSON
 `;
-
 try {
   const result  = graphqlQueryGen.processSchema(s, options);
   console.log(result);
+} catch (err) {
+  console.log('Error: ' + err.message);
+}
+
+// Process using SDL
+const fs = require('fs');
+let rawdata = fs.readFileSync('sdl.json');
+const sdl = JSON.parse(rawdata);
+try {
+  const result = graphqlQueryGen.processSDL(sdl.data, options);
+  console.log(result.schema, { 'maxArrayLength': null });
 } catch (err) {
   console.log('Error: ' + err.message);
 }

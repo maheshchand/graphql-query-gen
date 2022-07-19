@@ -50,8 +50,14 @@ type Query {
   allPeople(input: TestInput, input2: String): [People]
 }
 `;
-
 const result  = graphqlQueryGen.processSchema(s, options);
+
+// work with SDL
+const fs = require('fs');
+let rawdata = fs.readFileSync('sdl.json');
+const sdl = JSON.parse(rawdata);
+const result  = graphqlQueryGen.processSDL(sdl.data, options);
+
 
 // or you can do like below to handle errors as well
 const qGen = require('graphql-query-gen');
@@ -76,8 +82,10 @@ try {
 
 ```javascript
 {
+    debug: false, // Boolean [Default is false] -> Would print additional log message to help in debugging if true
     filter: null, // String [Default is null ] -> You can give a query or mutation name or part of it
-    depth: 7, // Number [Default is 5] -> For query/mutation result the nesting level of fields
+    responseDepth: 7, // Number [Default is 5] -> For query/mutation result the nesting level of fields
+    inputDepth: 8, // Number [Default is 7] -> For query/muation input the nesting level of fields
     spacer: ' ', // String [Default is ''] -> To indent query/mutation the space character (e.g. to print on HTML page you can use &nbsp; )
     indentBy: 2, // Number [Default is 4] -> The number of spacer to use for indentation.
     inputVariables: true, // Boolean [Default is false] -> In generated query input would be in form or variable if true, else inline input.
@@ -123,4 +131,4 @@ Sample output looks like following
 
 - Subscriptions are not processed and will resturn as empty as of now, planned for future release
 - Fragments support is limited for now, plan to enhance in future release
-- No logger for now, plan to add in future release
+- Better logging, current version has console.log and console.debug only

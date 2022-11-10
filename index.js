@@ -203,7 +203,7 @@ function generateArgsInput(types, args, indent, depth, spacer, indentBy, inputVa
                     inputs.push(`${arg.name}: $${arg.name}`);
                 }
             } else {
-                const generatedArg = generateArg(types, arg, indent, depth, spacer, indentBy, inputVariables);
+                const generatedArg = generateArg(types, arg, indent, depth, spacer, indentBy, inputVariables, noRandom);
                 if (generatedArg)
                     inputs.push(generatedArg);
             }
@@ -365,7 +365,7 @@ function getValue(type, inputVariables, noRandom) {
     const value = (noRandom)
         ? getStaticValue(type)
         : getRandomValue(type);
-    if (inputVariables && stringTypes.has(type)) {
+    if (stringTypes.has(type)) {
         return `"${value}"`;
     } else {
         return value;

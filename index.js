@@ -52,7 +52,8 @@ exports.process = function (sdl, schema, options) {
         spacer: ' ',
         indentBy: 4,
         inputVariables: false,
-        duplicatePercentage: 75
+        duplicatePercentage: 75,
+        noRandom: false,
     }
     options = Object.assign({}, defaults, options);
 
@@ -60,8 +61,8 @@ exports.process = function (sdl, schema, options) {
         console.debug = function () { };
 
     //Start processingL
-    var queries = listOperations(sdl.__schema.types, 'Query', options.filter, options.inputDepth, options.responseDepth, options.spacer, options.indentBy, options.inputVariables);
-    var mutations = listOperations(sdl.__schema.types, 'Mutation', options.filter, options.inputDepth, options.responseDepth, options.spacer, options.indentBy, options.inputVariables);
+    var queries = listOperations(sdl.__schema.types, 'Query', options.filter, options.inputDepth, options.responseDepth, options.spacer, options.indentBy, options.inputVariables, options.noRandom);
+    var mutations = listOperations(sdl.__schema.types, 'Mutation', options.filter, options.inputDepth, options.responseDepth, options.spacer, options.indentBy, options.inputVariables, options.noRandom);
     var subscriptions = [];
     var types = listTypes(sdl.__schema.types, 'OBJECT', options.spacer, options.indentBy);
     var inputs = listInputs(sdl.__schema.types, 'INPUT_OBJECT', options.spacer, options.indentBy);
@@ -138,7 +139,7 @@ function listInputs(types, kind, spacer, indent) {
     return inputs;
 }
 
-function listOperations(types, typeName, filter, inputDepth, responseDepth, spacer, indentBy, inputVariables) {
+function listOperations(types, typeName, filter, inputDepth, responseDepth, spacer, indentBy, inputVariables, noRandom) {
     console.log(`\nPreparing for operation type: ${typeName}`);
     var ops = [];
     const opType = types.filter(type => type.name == typeName)[0];
@@ -152,7 +153,7 @@ function listOperations(types, typeName, filter, inputDepth, responseDepth, spac
             console.debug(` - No matching fields found as per your current filter`);
         else
             filteredFields.forEach(field => {
-                const op = generateOperation(types, typeName, field.name, field.args, field.type, inputDepth, responseDepth, spacer, indentBy, inputVariables);
+                const op = generateOperation(types, typeName, field.name, field.args, field.type, inputDepth, responseDepth, spacer, indentBy, inputVariables, noRandom);
                 ops.push(op);
             });
     } else
@@ -160,9 +161,9 @@ function listOperations(types, typeName, filter, inputDepth, responseDepth, spac
     return ops;
 }
 
-function generateOperation(types, typeName, opName, args, resType, inputDepth, responseDepth, spacer, indentBy, inputVariables) {
+function generateOperation(types, typeName, opName, args, resType, inputDepth, responseDepth, spacer, indentBy, inputVariables, noRandom) {
     console.debug(`${' '.repeat(indentBy)}- generateOperation ${opName}`);
-    const argsInput = generateArgsInput(types, args, indentBy * 2, inputDepth, spacer, indentBy, inputVariables);
+    const argsInput = generateArgsInput(types, args, indentBy * 2, inputDepth, spacer, indentBy, inputVariables, noRandom);
     const resFields = generateResponseFields(types, resType, indentBy * 2, responseDepth, spacer, indentBy);
 
     var resDef = '';
@@ -183,7 +184,7 @@ ${spacer.repeat(indentBy)}${opName} ${argsInput.input}${resDef}
     };
 }
 
-function generateArgsInput(types, args, indent, depth, spacer, indentBy, inputVariables) {
+function generateArgsInput(types, args, indent, depth, spacer, indentBy, inputVariables, noRandom) {
     var argsInput = {
         typeVars: '',
         input: '',
@@ -195,14 +196,14 @@ function generateArgsInput(types, args, indent, depth, spacer, indentBy, inputVa
         args.forEach(arg => {
             console.debug(`${' '.repeat(indent)}- generateArgsInput - ${arg.name}: ${generateTypeValue(arg.type)}`);
             if (inputVariables) {
-                const argVal = getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables);
+                const argVal = getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables, noRandom);
                 if (argVal) {
                     argsInput.variables[arg.name] = argVal;
                     typeVars.push(`$${arg.name}: ${generateTypeValue(arg.type)}`);
                     inputs.push(`${arg.name}: $${arg.name}`);
                 }
             } else {
-                const generatedArg = generateArg(types, arg, indent, depth, spacer, indentBy, inputVariables);
+                const generatedArg = generateArg(types, arg, indent, depth, spacer, indentBy, inputVariables, noRandom);
                 if (generatedArg)
                     inputs.push(generatedArg);
             }
@@ -218,19 +219,19 @@ ${spacer.repeat(indent - indentBy)})`;
     return argsInput;
 }
 
-function generateArg(types, arg, indent, depth, spacer, indentBy, inputVariables) {
-    const argValue = getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables)
+function generateArg(types, arg, indent, depth, spacer, indentBy, inputVariables, noRandom) {
+    const argValue = getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables, noRandom);
     if (argValue)
         return `${spacer.repeat(indent)}${arg.name}: ${argValue}`;
     return null;
 }
 
-function getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables) {
+function getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables, noRandom) {
     const kind = arg.kind;
     const argType = getType(arg.type);
 
     console.debug(`${' '.repeat(indent + 1)}- getArgValue - ${arg.name}: ${generateTypeValue(arg.type)}`);
-    const argVal = generateArgValue(types, argType, indent, depth, spacer, indentBy, inputVariables);
+    const argVal = generateArgValue(types, argType, indent, depth, spacer, indentBy, inputVariables, noRandom);
     if (argVal == "")
         return null;
     if (kind == 'LIST')
@@ -242,9 +243,9 @@ function getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables
         return argVal;
 }
 
-function generateArgValue(types, argType, indent, depth, spacer, indentBy, inputVariables) {
+function generateArgValue(types, argType, indent, depth, spacer, indentBy, inputVariables, noRandom) {
     if (argType.kind == 'SCALAR')
-        return getRandomValue(argType.name, inputVariables);
+        return getValue(argType.name, inputVariables, noRandom);
     else if (argType.kind == 'ENUM') {
         const inputTypeDef = types.filter(type => type.name == argType.name && type.kind == 'ENUM')[0];
         return inputTypeDef.enumValues[0].name;
@@ -359,24 +360,57 @@ function generateResponseFields(types, responseType, indent, depth, spacer, inde
     return `${spacer.repeat(indent)}` + fields.join(`\n${spacer.repeat(indent)}`);
 }
 
-function getRandomValue(type, inputVariables) {
+let stringTypes = new Set(['String', 'ID', 'uuid', 'Date']);
+function getValue(type, inputVariables, noRandom) {
+    const value = (noRandom)
+        ? getStaticValue(type)
+        : getRandomValue(type);
+    if (stringTypes.has(type)) {
+        return `"${value}"`;
+    } else {
+        return value;
+    }
+}
+
+function getStaticValue(type) {
+    switch (type) {
+        case 'Int':
+            return 1;
+        case 'Float':
+            return 1.0;
+        case 'String':
+            return 'value';
+        case 'uuid':
+            return '11bf5b37-e0b8-42e0-8dcf-dc8c4aefc000';
+        case 'Boolean':
+            return true;
+        case 'Date':
+            return 'Fri Nov 04 2022';
+        case 'ID':
+            return '11bf5b37-e0b8-42e0-8dcf-dc8c4aefc000';
+        default:
+            return "";
+    }
+}
+
+function getRandomValue(type) {
     switch (type) {
         case 'Int':
             return Math.floor((Math.random() * 1000) + 1);
         case 'Float':
             return parseFloat(((Math.random() * 1000) + 1).toFixed(2));;
         case 'String':
-            return inputVariables ? getRandomString() : '"' + getRandomString() + '"';
+            return getRandomString();
         case 'uuid':
-            return inputVariables ? uuidv4() : '"' + uuidv4() + '"';
+            return uuidv4();
         case 'Boolean':
             return [true, false][Math.floor(Math.random() * 2)];
         case 'Date':
-            return inputVariables ? new Date().toDateString() : '"' + new Date().toDateString() + '"';
+            return new Date().toDateString();
         case 'ID':
-            return inputVariables ? uuidv4() : '"' + uuidv4() + '"';
+            return uuidv4();
         default:
-            return inputVariables ? "" : "\"\"";
+            return "";
     }
 }
 

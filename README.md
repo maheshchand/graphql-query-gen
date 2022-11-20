@@ -89,7 +89,8 @@ try {
     spacer: ' ', // String [Default is ''] -> To indent query/mutation the space character (e.g. to print on HTML page you can use &nbsp; )
     indentBy: 2, // Number [Default is 4] -> The number of spacer to use for indentation.
     inputVariables: true, // Boolean [Default is false] -> In generated query input would be in form or variable if true, else inline input.
-    duplicatePercentage: 75 // Number [Default is 75] -> for types and input check and list for duplicates based on this threshold value
+    duplicatePercentage: 75, // Number [Default is 75] -> for types and input check and list for duplicates based on this threshold value.
+    noRandom: false // Boolean [Default is false] -> Do not generate the argument values randomly but pick from a static set.
 }
 
 ```

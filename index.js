@@ -220,7 +220,7 @@ ${spacer.repeat(indent - indentBy)})`;
 
 function generateArg(types, arg, indent, depth, spacer, indentBy, inputVariables) {
     const argValue = getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables)
-    if (argValue)
+    if (argValue !== null)
         return `${spacer.repeat(indent)}${arg.name}: ${argValue}`;
     return null;
 }
@@ -231,7 +231,7 @@ function getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables
 
     console.debug(`${' '.repeat(indent + 1)}- getArgValue - ${arg.name}: ${generateTypeValue(arg.type)}`);
     const argVal = generateArgValue(types, argType, indent, depth, spacer, indentBy, inputVariables);
-    if (argVal == "")
+    if (argVal === "")
         return null;
     if (kind == 'LIST')
         if (inputVariables)

@@ -7,7 +7,7 @@ const options = {
   indentBy: 2,
   spacer: ' ',
   filter: null,
-  inputVariables: false,
+  inputVariables: true,
   duplicatePercentage: 75
 };
 
@@ -46,15 +46,20 @@ type Model {
     key: String
 }
 
+input Char {
+  id: ID
+  name: [String]!
+}
+
 input TestInput {
     key1: String
     key2: [Int!]!
     key3: Float!
-    key4: Boolean
+    key4: Char
 }
 union People = Character | Jedi | Droid
 type Query {
-  allPeople(input: TestInput!, input2: [String]): [People]
+  allPeople(input: TestInput!, input2: [String]!): [People]
   testScalar(a: String): JSON
 }
 

@@ -226,7 +226,8 @@ function generateArg(types, arg, indent, depth, spacer, indentBy, inputVariables
 }
 
 function getArgValue(types, arg, indent, depth, spacer, indentBy, inputVariables) {
-    const kind = arg.kind;
+    //needs fix if more kinds which not considered here
+    const kind = getKind(arg.type, []).filter(k => k!= 'NON_NULL')?.[0] || null;
     const argType = getType(arg.type);
 
     console.debug(`${' '.repeat(indent + 1)}- getArgValue - ${arg.name}: ${generateTypeValue(arg.type)}`);
@@ -302,8 +303,9 @@ function getType(fieldType) {
 }
 
 function getKind(fieldType, kinds) {
-    if (fieldType.ofType != null) {
+    if(fieldType.kind)
         kinds.push(fieldType.kind);
+    if (fieldType.ofType != null) {
         return getKind(fieldType.ofType, kinds);
     } else {
         return kinds;

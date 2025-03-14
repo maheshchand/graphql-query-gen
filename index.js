@@ -12,10 +12,10 @@ class HTTPResponseError extends Error {
 
 exports.processEndpoint = async function (url, options) {
     //Prepare to fetch sdl
-    var myHeaders = new fetch.Headers();
-    myHeaders.append("Content-Type", "application/json");
+    const requestHeaders = Object.assign({"Content-Type": "application/json"}, options.headers|| {});
+
     var data = { "query": getIntrospectionQuery() };
-    var requestOptions = { method: 'POST', headers: myHeaders, body: JSON.stringify(data), redirect: 'follow' };
+    var requestOptions = { method: 'POST', headers: requestHeaders, body: JSON.stringify(data), redirect: 'follow' };
 
     //Fetch SDL
     const response = await fetch(url, requestOptions)

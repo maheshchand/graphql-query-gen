@@ -8,7 +8,8 @@ const options = {
   spacer: ' ',
   filter: null,
   inputVariables: true,
-  duplicatePercentage: 75
+  duplicatePercentage: 75,
+  headers: {"Authorization": "Bearer eydfdgfgFGFGFG33"}
 };
 
 // Process using endpoint
@@ -32,6 +33,7 @@ const s = `
 type Character {
   id: ID
   name: [String]!
+  sex: Gender
 }
 type Jedi  {
   id: ID
@@ -50,15 +52,24 @@ input Char {
   id: ID
   name: [String]!
 }
-
 input TestInput {
     key1: String
     key2: [Int!]!
     key3: Float!
     key4: Char
+    key5: Gender
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
 }
 union People = Character | Jedi | Droid
 type Query {
+  """
+  This is a comment for allPeople Query
+  """
   allPeople(input: TestInput!, input2: [String]!): [People]
   testScalar(a: String): JSON
 }

@@ -1,6 +1,6 @@
 {
   "name": "graphql-query-gen",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Node.js module to generate queries with random input data from graphQL endpoint or schema",
   "main": "index.js",
   "scripts": {

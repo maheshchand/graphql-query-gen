@@ -25,6 +25,13 @@ exports.processEndpoint = async function (url, options) {
     }
 
     const json = await response.json();
+    if(json['errors'] && json.errors[0]) {
+        if(json.errors[0]['extensions'])
+            throw new Error(`${json.errors[0].extensions.code} - ${json.errors[0].message}`);
+        else
+        throw new Error(`${json.errors[0].message}`);
+    }
+
     const schema = printSchema(buildClientSchema(json.data, { assumeValid: true }))
     return exports.process(json.data, schema, options);
 }
@@ -52,7 +59,9 @@ exports.process = function (sdl, schema, options) {
         spacer: ' ',
         indentBy: 4,
         inputVariables: false,
-        duplicatePercentage: 75
+        duplicatePercentage: 75,
+        operationName: true,
+        comments: true
     }
     options = Object.assign({}, defaults, options);
 
@@ -60,8 +69,8 @@ exports.process = function (sdl, schema, options) {
         console.debug = function () { };
 
     //Start processingL
-    var queries = listOperations(sdl.__schema.types, 'Query', options.filter, options.inputDepth, options.responseDepth, options.spacer, options.indentBy, options.inputVariables);
-    var mutations = listOperations(sdl.__schema.types, 'Mutation', options.filter, options.inputDepth, options.responseDepth, options.spacer, options.indentBy, options.inputVariables);
+    var queries = listOperations(sdl.__schema.types, 'Query', options.filter, options.inputDepth, options.responseDepth, options.spacer, options.indentBy, options.inputVariables, options.operationName, options.comments);
+    var mutations = listOperations(sdl.__schema.types, 'Mutation', options.filter, options.inputDepth, options.responseDepth, options.spacer, options.indentBy, options.inputVariables, options.operationName, options.comments);
     var subscriptions = [];
     var types = listTypes(sdl.__schema.types, 'OBJECT', options.spacer, options.indentBy);
     var inputs = listInputs(sdl.__schema.types, 'INPUT_OBJECT', options.spacer, options.indentBy);
@@ -138,7 +147,7 @@ function listInputs(types, kind, spacer, indent) {
     return inputs;
 }
 
-function listOperations(types, typeName, filter, inputDepth, responseDepth, spacer, indentBy, inputVariables) {
+function listOperations(types, typeName, filter, inputDepth, responseDepth, spacer, indentBy, inputVariables, operationName, comments) {
     console.log(`\nPreparing for operation type: ${typeName}`);
     var ops = [];
     const opType = types.filter(type => type.name == typeName)[0];
@@ -152,7 +161,7 @@ function listOperations(types, typeName, filter, inputDepth, responseDepth, spac
             console.debug(` - No matching fields found as per your current filter`);
         else
             filteredFields.forEach(field => {
-                const op = generateOperation(types, typeName, field.name, field.args, field.type, inputDepth, responseDepth, spacer, indentBy, inputVariables);
+                const op = generateOperation(types, typeName, field.name, field.description, field.args, field.type, inputDepth, responseDepth, spacer, indentBy, inputVariables, operationName, comments);
                 ops.push(op);
             });
     } else
@@ -160,11 +169,13 @@ function listOperations(types, typeName, filter, inputDepth, responseDepth, spac
     return ops;
 }
 
-function generateOperation(types, typeName, opName, args, resType, inputDepth, responseDepth, spacer, indentBy, inputVariables) {
+function generateOperation(types, typeName, opName, opDescription, args, resType, inputDepth, responseDepth, spacer, indentBy, inputVariables, operationName, comments) {
     console.debug(`${' '.repeat(indentBy)}- generateOperation ${opName}`);
-    const argsInput = generateArgsInput(types, args, indentBy * 2, inputDepth, spacer, indentBy, inputVariables);
+    const argsInput = generateArgsInput(types, args, indentBy * 2, inputDepth, spacer, indentBy, inputVariables, comments);
     const resFields = generateResponseFields(types, resType, indentBy * 2, responseDepth, spacer, indentBy);
 
+    const printedOperationName = operationName? ` ${opName}`: '';
+    const printedComments = (comments && opDescription)? `# ${opDescription}\n`: '';
     var resDef = '';
     if (resFields)
         resDef = ` {
@@ -172,7 +183,7 @@ ${spacer.repeat(indentBy * 2)}__typename
 ${resFields}
 ${spacer.repeat(indentBy)}}`;
 
-    const query = `${typeName.toLowerCase()}${argsInput.typeVars} {
+    const query = `${printedComments}${typeName.toLowerCase()}${printedOperationName}${argsInput.typeVars} {
 ${spacer.repeat(indentBy)}${opName} ${argsInput.input}${resDef}
 }`;
 
@@ -183,7 +194,7 @@ ${spacer.repeat(indentBy)}${opName} ${argsInput.input}${resDef}
     };
 }
 
-function generateArgsInput(types, args, indent, depth, spacer, indentBy, inputVariables) {
+function generateArgsInput(types, args, indent, depth, spacer, indentBy, inputVariables, comments) {
     var argsInput = {
         typeVars: '',
         input: '',
@@ -199,12 +210,17 @@ function generateArgsInput(types, args, indent, depth, spacer, indentBy, inputVa
                 if (argVal) {
                     argsInput.variables[arg.name] = argVal;
                     typeVars.push(`$${arg.name}: ${generateTypeValue(arg.type)}`);
+                    if(comments && arg.description)
+                        inputs.push(`# ${arg.description}`);
                     inputs.push(`${arg.name}: $${arg.name}`);
                 }
             } else {
                 const generatedArg = generateArg(types, arg, indent, depth, spacer, indentBy, inputVariables);
-                if (generatedArg)
+                if (generatedArg) {
+                    if(comments && arg.description)
+                        inputs.push(`# ${arg.description}`);
                     inputs.push(generatedArg);
+                }
             }
         });
 

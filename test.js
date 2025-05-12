@@ -9,7 +9,9 @@ const options = {
   filter: null,
   inputVariables: true,
   duplicatePercentage: 75,
-  headers: {"Authorization": "Bearer eydfdgfgFGFGFG33"}
+  headers: {"Authorization": "Bearer eydfdgfgFGFGFG33"},
+  operationName: true,
+  comments: true,
 };
 
 // Process using endpoint
@@ -52,6 +54,12 @@ input Char {
   id: ID
   name: [String]!
 }
+
+input Char2 {
+  id: ID
+  name: [String]!
+}
+
 input TestInput {
     key1: String
     key2: [Int!]!
@@ -65,12 +73,18 @@ enum Gender {
   FEMALE
   OTHER
 }
+
 union People = Character | Jedi | Droid
 type Query {
   """
   This is a comment for allPeople Query
   """
-  allPeople(input: TestInput!, input2: [String]!): [People]
+  allPeople(
+    """
+    First Input
+    """
+    input: TestInput!,
+    input2: [String]!): [People]
   testScalar(a: String): JSON
 }
 
@@ -78,7 +92,7 @@ scalar JSON
 `;
 try {
   const result  = graphqlQueryGen.processSchema(s, options);
-  console.log(result);
+  console.log(JSON.stringify(result, undefined, 4));
 } catch (err) {
   console.log('Error: ' + err.message);
 }
